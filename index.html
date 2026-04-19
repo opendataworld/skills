@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Structured Data Parser | Data Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: #1a1a24;
+            --bg-card-hover: #222230;
+            --text-primary: #f0f0f5;
+            --text-secondary: #a0a0b0;
+            --text-muted: #606070;
+            --accent: #00d4aa;
+            --accent-secondary: #00ffcc;
+            --accent-glow: rgba(0, 212, 170, 0.15);
+            --border: #2a2a3a;
+            --border-light: #3a3a4a;
+            --gradient-start: #00d4aa;
+            --gradient-end: #00a8ff;
+            --gradient: linear-gradient(135deg, #00d4aa 0%, #00a8ff 100%);
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-body: 'DM Sans', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Animated background */
+        .bg-grid {
+            position: fixed;
+            inset: 0;
+            background-image: 
+                linear-gradient(rgba(0, 212, 170, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 212, 170, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .bg-glow {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.4;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .bg-glow-1 {
+            top: -200px;
+            right: -100px;
+            background: var(--gradient-start);
+            animation: float1 20s ease-in-out infinite;
+        }
+
+        .bg-glow-2 {
+            bottom: -300px;
+            left: -100px;
+            background: var(--gradient-end);
+            animation: float2 25s ease-in-out infinite;
+        }
+
+        @keyframes float1 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(-50px, 50px) scale(1.1); }
+        }
+
+        @keyframes float2 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(50px, -50px) scale(1.2); }
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 16px 0;
+            background: rgba(10, 10, 15, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-family: var(--font-display);
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--gradient);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
+
+        nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        nav a:hover {
+            color: var(--text-primary);
+        }
+
+        .cta-button {
+            background: var(--gradient);
+            color: var(--bg-primary);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 212, 170, 0.3);
+        }
+
+        /* Hero */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 120px 24px 80px;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--accent-glow);
+            border: 1px solid var(--accent);
+            padding: 8px 16px;
+            border-radius: 100px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--accent);
+            margin-bottom: 32px;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .hero-badge::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: var(--accent);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            font-family: var(--font-display);
+            font-size: clamp(40px, 8vw, 72px);
+            font-weight: 700;
+            line-height: 1.1;
+            margin-bottom: 24px;
+            max-width: 900px;
+            animation: fadeInUp 0.6s ease-out 0.1s backwards;
+        }
+
+        .gradient-text {
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: 18px;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin-bottom: 48px;
+            animation: fadeInUp 0.6s ease-out 0.2s backwards;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            justify-content: center;
+            animation: fadeInUp 0.6s ease-out 0.3s backwards;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 28px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: none;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: var(--gradient);
+            color: var(--bg-primary);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(0, 212, 170, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--border-light);
+        }
+
+        /* Stats */
+        .stats {
+            display: flex;
+            gap: 48px;
+            flex-wrap: wrap;
+            justify-content: center;
+            padding: 48px 0;
+            animation: fadeInUp 0.6s ease-out 0.4s backwards;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-family: var(--font-display);
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--accent);
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+
+        /* Features */
+        .section {
+            padding: 100px 0;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 64px;
+        }
+
+        .section-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 16px;
+        }
+
+        h2 {
+            font-family: var(--font-display);
+            font-size: clamp(32px, 5vw, 48px);
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .section-subtitle {
+            font-size: 16px;
+            color: var(--text-secondary);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        /* Parser Cards */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: block;
+        }
+
+        .card:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--border-light);
+            transform: translateY(-4px);
+        }
+
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--accent-glow);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .card h3 {
+            font-family: var(--font-display);
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .card p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .tag {
+            font-size: 11px;
+            font-weight: 500;
+            padding: 4px 10px;
+            background: var(--bg-primary);
+            border-radius: 100px;
+            color: var(--text-muted);
+        }
+
+        /* How it works */
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+        }
+
+        .step {
+            position: relative;
+        }
+
+        .step-number {
+            font-family: var(--font-display);
+            font-size: 64px;
+            font-weight: 700;
+            color: var(--bg-card);
+            position: absolute;
+            top: -20px;
+            left: 0;
+            line-height: 1;
+            z-index: 0;
+        }
+
+        .step-content {
+            position: relative;
+            z-index: 1;
+            padding-top: 40px;
+        }
+
+        .step h3 {
+            font-family: var(--font-display);
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .step p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        /* Code example */
+        .code-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .code-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-secondary);
+        }
+
+        .code-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .code-dot.red { background: #ff5f57; }
+        .code-dot.yellow { background: #febc2e; }
+        .code-dot.green { background: #28c840; }
+
+        .code-title {
+            margin-left: 12px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        pre {
+            padding: 24px;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        code {
+            color: var(--text-primary);
+        }
+
+        .keyword { color: #ff79c6; }
+        .string { color: #f1fa8c; }
+        .function { color: #50fa7b; }
+        .comment { color: #6272a4; }
+        .number { color: #bd93f9; }
+
+        /* Blog section */
+        .blog-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 24px;
+        }
+
+        .blog-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: block;
+        }
+
+        .blog-card:hover {
+            border-color: var(--border-light);
+            transform: translateY(-4px);
+        }
+
+        .blog-image {
+            height: 180px;
+            background: var(--gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            opacity: 0.8;
+        }
+
+        .blog-content {
+            padding: 24px;
+        }
+
+        .blog-meta {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .blog-card h3 {
+            font-family: var(--font-display);
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .blog-card p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 60px 0 40px;
+            margin-top: 60px;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .footer-col h4 {
+            font-family: var(--font-display);
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+
+        .footer-col a {
+            display: block;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 13px;
+            margin-bottom: 12px;
+            transition: color 0.2s;
+        }
+
+        .footer-col a:hover {
+            color: var(--text-primary);
+        }
+
+        .footer-bottom {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        @media (max-width: 768px) {
+            nav {
+                display: none;
+            }
+            
+            .hero-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .stats {
+                gap: 32px;
+            }
+            
+            .footer-bottom {
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-grid"></div>
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+
+    <header>
+        <div class="container header-inner">
+            <a href="/" class="logo">
+                <div class="logo-icon">⚡</div>
+                <span>DataParser</span>
+            </a>
+            <nav>
+                <a href="#features">Features</a>
+                <a href="#docs">Documentation</a>
+                <a href="#blog">Blog</a>
+                <a href="https://github.com/opendataworld/skills/tree/main/structured-data-parser" class="cta-button">Get Started</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="hero-badge">
+                <span>Open Source</span>
+            </div>
+            <h1>Parse Data from <span class="gradient-text">Any Source</span></h1>
+            <p class="hero-subtitle">A powerful Python library for extracting, transforming, and exporting structured data from Airtable, Notion, Excel, Google Sheets, GitHub, Wikipedia, and more.</p>
+            <div class="hero-buttons">
+                <a href="https://github.com/opendataworld/skills/tree/main/structured-data-parser" class="btn btn-primary">
+                    View on GitHub
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.54 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+                </a>
+                <a href="#docs" class="btn btn-secondary">Read the Docs</a>
+            </div>
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-value">15+</div>
+                    <div class="stat-label">Data Sources</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">100%</div>
+                    <div class="stat-label">Free & Open Source</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">CLI</div>
+                    <div class="stat-label">Ready</div>
+                </div>
+            </div>
+        </section>
+
+        <section id="features" class="section">
+            <div class="container">
+                <div class="section-header">
+                    <div class="section-label">Features</div>
+                    <h2>One Library, <span class="gradient-text">15+ Parsers</span></h2>
+                    <p class="section-subtitle">Unified API for parsing structured data from virtually any source your team uses.</p>
+                </div>
+                <div class="grid">
+                    <a href="#" class="card">
+                        <div class="card-icon">📊</div>
+                        <h3>Airtable</h3>
+                        <p>Fetch bases, tables, and records with full filter, sort, and formula support. Auto-paginates through large datasets.</p>
+                        <div class="card-tags">
+                            <span class="tag">API</span>
+                            <span class="tag">REST</span>
+                        </div>
+                    </a>
+                    <a href="#" class="card">
+                        <div class="card-icon">📗</div>
+                        <h3>Notion</h3>
+                        <p>Query databases, fetch pages, and parse block trees. Handles all property types including relations and rollups.</p>
+                        <div class="card-tags">
+                            <span class="tag">Database</span>
+                            <span class="tag">Blocks</span>
+                        </div>
+                    </a>
+                    <a href="#" class="card">
+                        <div class="card-icon">📘</div>
+                        <h3>Excel / Google Sheets</h3>
+                        <p>Parse .xlsx, .xls, .xlsm, .ods files. Auto-detect headers, handle merged cells, multi-sheet extraction.</p>
+                        <div class="card-tags">
+                            <span class="tag">XLSX</span>
+                            <span class="tag">CSV</span>
+                        </div>
+                    </a>
+                    <a href="#" class="card">
+                        <div class="card-icon">🐙</div>
+                        <h3>GitHub API</h3>
+                        <p>Fetch repos, issues, PRs, releases, commits. Auto-detects resource type and handles pagination.</p>
+                        <div class="card-tags">
+                            <span class="tag">REST</span>
+                            <span class="tag">GraphQL</span>
+                        </div>
+                    </a>
+                    <a href="#" class="card">
+                        <div class="card-icon">📚</div>
+                        <h3>Wikipedia</h3>
+                        <p>Extract tables, infoboxes, and article content. Parse wikitext to clean HTML or JSON.</p>
+                        <div class="card-tags">
+                            <span class="tag">Wiki</span>
+                            <span class="tag">HTML</span>
+                        </div>
+                    </a>
+                    <a href="#" class="card">
+                        <div class="card-icon">🗃️</div>
+                        <h3>Wikidata</h3>
+                        <p>Query entities, properties, and values. SPARQL support for complex data retrieval.</p>
+                        <div class="card-tags">
+                            <span class="tag">RDF</span>
+                            <span class="tag">SPARQL</span>
+                        </div>
+                    </a>
+                    <a href="#" class="card">
+                        <div class="card-icon">📄</div>
+                        <h3>PDF Tables</h3>
+                        <p>Extract tables from PDF documents. Uses Camelot for accurate table detection.</p>
+                        <div class="card-tags">
+                            <span class="tag">PDF</span>
+                            <span class="tag">OCR</span>
+                        </div>
+                    </a>
+                    <a href="#" class="card">
+                        <div class="card-icon">🌐</div>
+                        <h3>HTML Tables</h3>
+                        <p>Parse tables from any web page. CSS selector support for targeted extraction.</p>
+                        <div class="card-tags">
+                            <span class="tag">BeautifulSoup</span>
+                            <span class="tag">lxml</span>
+                        </div>
+                    </a>
+                    <a href="#" class="card">
+                        <div class="card-icon">📝</div>
+                        <h3>Markdown</h3>
+                        <p>Parse GitHub-flavored markdown tables. Handles alignment and multiline content.</p>
+                        <div class="card-tags">
+                            <span class="tag">GFM</span>
+                            <span class="tag">MD</span>
+                        </div>
+                    </a>
+                    <a href="#" class="card">
+                        <div class="card-icon">🔌</div>
+                        <h3>WordPress REST API</h3>
+                        <p>Fetch posts, pages, and media. Supports custom post types and WP-CLI filtering.</p>
+                        <div class="card-tags">
+                            <span class="tag">WP-API</span>
+                            <span class="tag">JSON</span>
+                        </div>
+                    </a>
+                    <a href="#" class="card">
+                        <div class="card-icon">⚛️</div>
+                        <h3>Next.js SSR</h3>
+                        <p>Fetch and parse server-rendered pages. Handles dynamic routes and API routes.</p>
+                        <div class="card-tags">
+                            <span class="tag">SSR</span>
+                            <span class="tag">React</span>
+                        </div>
+                    </a>
+                    <a href="#" class="card">
+                        <div class="card-icon">📈</div>
+                        <h3>Gartner Markets</h3>
+                        <p>Specialized parser for Gartner market data. Extracts vendor rankings and market reports.</p>
+                        <div class="card-tags">
+                            <span class="tag">Market Research</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section id="docs" class="section">
+            <div class="container">
+                <div class="section-header">
+                    <div class="section-label">How It Works</div>
+                    <h2>Get Started in <span class="gradient-text">Minutes</span></h2>
+                    <p class="section-subtitle">Simple, consistent API across all data sources.</p>
+                </div>
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-number">01</div>
+                        <div class="step-content">
+                            <h3>Install</h3>
+                            <p>Install the parsers you need. Each parser is standalone — no huge dependencies.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">02</div>
+                        <div class="step-content">
+                            <h3>Configure</h3>
+                            <p>Set your API tokens as environment variables. Most parsers work out of the box.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">03</div>
+                        <div class="step-content">
+                            <h3>Parse</h3>
+                            <p>Call the parse() function. Returns clean list[dict] ready for your app.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">04</div>
+                        <div class="step-content">
+                            <h3>Export</h3>
+                            <p>Output to JSON, CSV, or use the dataclasses directly.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="container">
+                <div class="code-section">
+                    <div class="code-header">
+                        <div class="code-dot red"></div>
+                        <div class="code-dot yellow"></div>
+                        <div class="code-dot green"></div>
+                        <span class="code-title">Example: Notion Database → JSON</span>
+                    </div>
+                    <pre><code><span class="comment"># Install the Notion parser</span>
+<span class="function">pip</span> install notion-client
+
+<span class="comment"># Set your token</span>
+<span class="function">export</span> NOTION_TOKEN=secret_xxxx
+
+<span class="comment"># Parse a database</span>
+<span class="keyword">from</span> parse_notion <span class="keyword">import</span> query_database, to_json
+
+pages = query_database(<span class="string">"DATABASE_ID"</span>)
+output = to_json(pages)
+
+<span class="function">print</span>(output)</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="container">
+                <div class="code-section">
+                    <div class="code-header">
+                        <div class="code-dot red"></div>
+                        <div class="code-dot yellow"></div>
+                        <div class="code-dot green"></div>
+                        <span class="code-title">Example: Excel → CSV</span>
+                    </div>
+                    <pre><code><span class="comment"># Install Excel parser</span>
+<span class="function">pip</span> install openpyxl
+
+<span class="comment"># Parse Excel file</span>
+<span class="keyword">from</span> parse_excel <span class="keyword">import</span> parse, to_csv
+
+records = parse(<span class="string">"data.xlsx"</span>, sheet=<span class="string">"Revenue"</span>)
+output = to_csv(records)
+
+<span class="function">print</span>(output)</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <section id="blog" class="section">
+            <div class="container">
+                <div class="section-header">
+                    <div class="section-label">Blog</div>
+                    <h2>Latest <span class="gradient-text">Articles</span></h2>
+                    <p class="section-subtitle">Tutorials, guides, and updates from the community.</p>
+                </div>
+                <div class="blog-grid">
+                    <a href="#blog" class="blog-card">
+                        <div class="blog-image">📊</div>
+                        <div class="blog-content">
+                            <div class="blog-meta">Tutorial • 10 min read</div>
+                            <h3>Parsing Airtable Data at Scale</h3>
+                            <p>Learn how to fetch millions of records from Airtable with automatic pagination and rate limit handling.</p>
+                        </div>
+                    </a>
+                    <a href="#blog" class="blog-card">
+                        <div class="blog-image">📗</div>
+                        <div class="blog-content">
+                            <div class="blog-meta">Guide • 8 min read</div>
+                            <h3>Notion to Data Warehouse</h3>
+                            <p>Extract Notion databases and load them into BigQuery, Snowflake, or Redshift.</p>
+                        </div>
+                    </a>
+                    <a href="#blog" class="blog-card">
+                        <div class="blog-image">📚</div>
+                        <div class="blog-content">
+                            <div class="blog-meta">Tutorial • 12 min read</div>
+                            <h3>Wikipedia Tables Made Easy</h3>
+                            <p>Extract complex tables from Wikipedia articles and convert them to clean JSON or CSV.</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-col">
+                    <h4>Product</h4>
+                    <a href="#features">Features</a>
+                    <a href="#docs">Documentation</a>
+                    <a href="#blog">Blog</a>
+                    <a href="https://github.com/opendataworld/skills/tree/main/structured-data-parser">GitHub</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Parsers</h4>
+                    <a href="#">Airtable</a>
+                    <a href="#">Notion</a>
+                    <a href="#">Excel</a>
+                    <a href="#">GitHub</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Community</h4>
+                    <a href="#">Discord</a>
+                    <a href="#">GitHub Issues</a>
+                    <a href="#">Contribute</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Legal</h4>
+                    <a href="#">Privacy</a>
+                    <a href="#">Terms</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>© 2026 Structured Data Parser. Open source under MIT license.</p>
+                <p>Built with ❤️ by the OpenDataWorld community</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
